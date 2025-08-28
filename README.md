@@ -131,11 +131,3 @@ From here, you can easily answer:
 - **Reliable** → DLT ensures only clean, validated data flows into Gold  
 - **Industry standard** → Medallion architecture (Bronze → Silver → Gold)  
 
----
-
-## The Takeaway  
-This project turns **messy raw Netflix data** into **business-ready insights** using an Azure-native design.  
-
-It’s not just a demo — it’s a blueprint of how modern data engineering pipelines are actually built in enterprises.  
-
-That’s why I chose this for my **portfolio and resume**. It’s simple enough to explain in an interview, but detailed enough to show that I know how to put the right building blocks together.  
