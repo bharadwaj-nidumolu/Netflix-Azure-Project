@@ -1,24 +1,19 @@
-# Netflix Data Engineering Project  
+#  Netflix Data Engineering Project  
 
-##  Why I Built This  
-I wanted to take a real-world scenario — Netflix data — and show how a company could design a modern data pipeline using Microsoft Azure.  
+## Project Overview  
+This project showcases the design and implementation of a **modern data engineering pipeline** on **Microsoft Azure** using Netflix datasets.  
 
-The idea is simple:  
-- Raw Netflix files come in.  
-- We don’t trust them right away — so we validate.  
-- Once we’re confident, we load, clean, and organize them.  
-- In the end, we get business-ready data that analysts can use to answer big questions like:  
-  - What genres are trending?  
-  - How has Netflix content grown year after year?  
-  - Who are the most frequent directors and actors?  
+The pipeline demonstrates how raw, unstructured CSV files can be ingested, validated, transformed, and curated into **business-ready data** by applying the **Medallion Architecture (Bronze → Silver → Gold)**.  
 
-This project became my way of telling a story: from messy CSVs → to clean insights.  
+Key business questions supported by this pipeline include:  
+- What genres are most popular on Netflix?  
+- How has Netflix content evolved over time?  
+- Who are the most frequent directors and actors?  
+- How is content distributed across different countries?  
 
 ---
 
-##  How It’s Put Together  
-
-Here’s the high-level design:  
+## Solution Architecture  
 
 ```mermaid
 flowchart TD
@@ -51,48 +46,47 @@ flowchart TD
     BR -->|Transformations in Param Notebooks| SIL -->|DLT + Expectations| GLD --> BI
 ```
 
-### How It Works, Step by Step  
-1. **Validation First** → ADF checks if `netflix_titles.csv` exists in Raw.  
-   - If **yes** → it then goes to GitHub and pulls the rest of the CSVs into Bronze.  
-   - If **no** → it fails gracefully and sends a notification (no surprises later).  
+###  Data Flow  
+1. **Validation Step (ADF)** → Ensures that `netflix_titles.csv` exists in Raw.  
+   - If present → triggers ingestion of additional CSVs from GitHub into Bronze.  
+   - If absent → pipeline halts gracefully and sends a notification.  
 
-2. **Streaming from Raw** → Databricks Auto Loader watches the Raw container. Whenever new files land, it streams them into Bronze with **checkpointing** and **schema evolution**.  
+2. **Raw → Bronze (Auto Loader)** → Databricks Auto Loader continuously ingests files from Raw into Bronze with support for schema evolution and checkpointing.  
 
-3. **Bronze Layer** → This is our first landing zone. It’s like “raw but trusted.”  
+3. **Bronze Layer** → Raw but trusted zone for first-stage ingestion.  
 
-4. **Silver Layer** → Using parameterized Databricks notebooks (driven by JSON configs), the data is cleaned:  
-   - Dates standardized  
-   - Genres split into multiple rows  
-   - Nulls handled  
-   - Duplicates removed  
+4. **Silver Layer** → Parameterized Databricks notebooks clean and standardize the data:  
+   - Normalize date formats  
+   - Split multi-valued genres into rows  
+   - Handle null values  
+   - Deduplicate records  
 
-5. **Gold Layer** → Delta Live Tables (DLT) applies expectations (quality checks). Only good, reliable data makes it here.  
+5. **Gold Layer (DLT)** → Delta Live Tables apply data quality expectations and produce curated, analytics-ready datasets.  
 
-6. **Consumption** → Analysts connect Power BI to the Gold tables and start asking questions.  
-
----
-
-##  What I Used  
-- **Azure Data Factory (ADF)** → pipelines, validation, orchestration  
-- **Azure Data Lake Storage Gen2 (ADLS)** → containers: raw, bronze, silver, gold, metastore  
-- **Access Connector** → secure handshake between ADLS and Databricks  
-- **Azure Databricks** → Auto Loader, parameterized notebooks, transformations  
-- **Unity Catalog** → governance + external locations  
-- **Delta Live Tables (DLT)** → automated validation and Gold table creation  
-- **Power BI** → reporting layer  
+6. **Consumption Layer** → Power BI connects to Gold tables for analysis and visualization.  
 
 ---
 
-##  The Data  
-Netflix data comes from public CSVs hosted on GitHub.  
-Some examples:  
-- `netflix_titles.csv` → core dataset (movies, TV shows, directors, cast, release years, etc.)  
+##  Technologies Used  
+- **Azure Data Factory (ADF)** → Orchestration, validation, ingestion  
+- **Azure Data Lake Storage Gen2 (ADLS)** → Layered storage (Raw, Bronze, Silver, Gold, Metastore)  
+- **Access Connector** → Secure integration between ADLS and Databricks  
+- **Azure Databricks** → Auto Loader, parameterized PySpark notebooks, transformations  
+- **Unity Catalog** → Centralized governance and external locations  
+- **Delta Live Tables (DLT)** → Automated validation and Gold table creation  
+- **Power BI** → Visualization and reporting  
+
+---
+
+## Dataset Details  
+Netflix data was sourced from public CSVs hosted on GitHub, including:  
+- `netflix_titles.csv` → Core dataset (titles, directors, cast, release years, etc.)  
 - `netflix_cast.csv`  
 - `netflix_category.csv`  
 - `netflix_countries.csv`  
 - `netflix_directors.csv`  
 
-Instead of hardcoding, I made this **parameterized JSON** (`ADF Parameter Array.json`) to drive ingestion:  
+Parameterization was achieved through a JSON configuration file (`ADF Parameter Array.json`):  
 
 ```json
 [
@@ -103,31 +97,35 @@ Instead of hardcoding, I made this **parameterized JSON** (`ADF Parameter Array.
 ]
 ```
 
-This makes the pipeline **dynamic and reusable** for other datasets.  
+This design allows the pipeline to be **dynamic, reusable, and extendable** for other datasets.  
 
 ---
 
-##  What We Get in the End  
-The Gold layer produces clean, query-ready tables:  
+##  Final Deliverables  
+Curated **Gold tables** produced include:  
 - `gold_netflix_titles`  
 - `gold_netflix_cast`  
 - `gold_netflix_category`  
 - `gold_netflix_countries`  
 - `gold_netflix_directors`  
 
-From here, you can easily answer:  
-- Growth of Netflix movies vs shows by year  
-- What genres dominate Netflix’s catalog  
-- How content is spread across countries  
-- Which directors and actors appear the most  
+These datasets enable analysis of:  
+-  Year-over-year growth of Netflix movies and shows  
+-  Most common and trending genres  
+-  Geographic distribution of content  
+-  Most frequent directors and cast members  
 
 ---
 
-## Why This Project Stands Out  
-- **Checks before ingesting** → avoids half-baked pipelines  
-- **Dynamic** → JSON-driven parameterization  
-- **Secure** → Access Connector ensures Databricks ↔ ADLS is locked down  
-- **Scalable** → Auto Loader handles new files without manual triggers  
-- **Reliable** → DLT ensures only clean, validated data flows into Gold  
-- **Industry standard** → Medallion architecture (Bronze → Silver → Gold)  
+##  Key Highlights  
+- **Pre-ingestion validation** → prevents partial or incomplete data loads  
+- **Dynamic ingestion** → driven by JSON parameters, eliminating hardcoding  
+- **Secure integration** → via Access Connector between ADLS and Databricks  
+- **Scalable ingestion** → Auto Loader handles schema drift and incremental files  
+- **High data quality** → DLT ensures only validated data flows to Gold  
+- **Enterprise-grade design** → Implements the Medallion architecture  
 
+---
+
+##  Conclusion  
+This project demonstrates how a modern, cloud-native data platform can be built on **Azure** to transform raw data into **business-ready insights**.  
